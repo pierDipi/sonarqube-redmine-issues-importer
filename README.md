@@ -26,7 +26,7 @@ Prerequisites:
 
 Clone the repository:
 - https: `git clone https://github.com/pierDipi/sonarqube-redmine-issues-importer.git`
-- ssh: `git@github.com:pierDipi/sonarqube-redmine-issues-importer.git`
+- ssh: `git clone git@github.com:pierDipi/sonarqube-redmine-issues-importer.git`
 
 Run 
 ```bash
