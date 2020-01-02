@@ -65,19 +65,19 @@ type SonarqubeResponse struct {
 }
 
 type RedmineIssue struct {
-	ProjectId      string  `json:"project_id"`
-	TrackerId      string  `json:"tracker_id"`
-	StatusId       string  `json:"status_id"`
-	PriorityId     string  `json:"priority_id"`
+	ProjectId      uint64  `json:"project_id"`
+	TrackerId      uint64  `json:"tracker_id"`
+	StatusId       uint64  `json:"status_id"`
+	PriorityId     uint64  `json:"priority_id"`
 	Subject        string  `json:"subject"`
 	Description    string  `json:"description"`
-	ParentIssueId  string  `json:"parent_issue_id"`
+	ParentIssueId  uint64  `json:"parent_issue_id"`
 	EstimatedHours float64 `json:"estimated_hours"`
 
-	CustomFields []struct{
-		Id string `json:"id"`
-		Value string `json:"value"`
-	} `json:"custom_fields"`
+	//CustomFields []struct{
+	//	Id string `json:"id"`
+	//	Value string `json:"value"`
+	//} `json:"custom_fields"`
 }
 
 type RedmineRequest struct {
@@ -94,9 +94,9 @@ func main() {
 type redmineFlags struct {
 	URL           string
 	apiKey        string
-	projectId     string
-	trackerId     string
-	parentIssueId string
+	projectId     uint64
+	trackerId     uint64
+	parentIssueId uint64
 }
 
 func run() error {
@@ -105,17 +105,17 @@ func run() error {
 	redmineFlags := redmineFlags{
 		URL:           "",
 		apiKey:        "",
-		projectId:     "",
-		trackerId:     "",
-		parentIssueId: "",
+		projectId:     1,
+		trackerId:     1,
+		parentIssueId: 1,
 	}
 
 	flag.StringVar(&sonarqubeIssueSearchURL, "sonarqube-issues-search-url", sonarqubeIssueSearchURL, "Sonarqube issues search URL (without pageIndex query param)")
 	flag.StringVar(&redmineFlags.URL, "redmine-base-url", redmineFlags.URL, "Redmine base URL")
 	flag.StringVar(&redmineFlags.apiKey, "redmine-api-key", redmineFlags.apiKey, "Redmine API key")
-	flag.StringVar(&redmineFlags.projectId, "redmine-project-id", redmineFlags.projectId, "Redmine project identifier")
-	flag.StringVar(&redmineFlags.trackerId, "redmine-tracker-id", redmineFlags.trackerId, "Redmine tracker identifier")
-	flag.StringVar(&redmineFlags.parentIssueId, "redmine-parent-issue-id", redmineFlags.parentIssueId, "Redmine parent issue identifier")
+	flag.Uint64Var(&redmineFlags.projectId, "redmine-project-id", redmineFlags.projectId, "Redmine project identifier")
+	flag.Uint64Var(&redmineFlags.trackerId, "redmine-tracker-id", redmineFlags.trackerId, "Redmine tracker identifier")
+	flag.Uint64Var(&redmineFlags.parentIssueId, "redmine-parent-issue-id", redmineFlags.parentIssueId, "Redmine parent issue identifier")
 	flag.Parse()
 
 	sonarqubeResponse, err := getSonarqubeIssues(sonarqubeIssueSearchURL)
@@ -152,7 +152,7 @@ func importIssues(sonarqubeIssues []SonarqubeIssue, redmineFlags redmineFlags) {
 			log.Println(err)
 			log.Println(sonarqubeIssue)
 		}
-		after := time.After(2 * time.Second)
+		after := time.After(time.Second)
 		select {
 		case <-after:
 		}
@@ -203,6 +203,7 @@ func createRedmineIssue(redmineFlags redmineFlags, issue RedmineIssue) error {
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("X-Redmine-API-Key", redmineFlags.apiKey)
 
+
 	response, err := client.Do(request)
 	if err != nil {
 		return err
@@ -210,6 +211,8 @@ func createRedmineIssue(redmineFlags redmineFlags, issue RedmineIssue) error {
 	defer response.Body.Close()
 
 	if response.StatusCode >= 300 {
+		b, _ := ioutil.ReadAll(response.Body)
+		log.Println(string(b))
 		return fmt.Errorf("response status code %d", response.StatusCode)
 	}
 	return nil
@@ -237,8 +240,8 @@ func transformToRedmineIssue(redmineFlags redmineFlags, issue SonarqubeIssue) (R
 	return RedmineIssue{
 		ProjectId:      redmineFlags.projectId,
 		TrackerId:      redmineFlags.trackerId,
-		StatusId:       "1",
-		PriorityId:     "2",
+		StatusId:       1,
+		PriorityId:     2,
 		Subject:        subject,
 		Description:    description,
 		ParentIssueId:  redmineFlags.parentIssueId,
